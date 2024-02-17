@@ -1,0 +1,2 @@
+/my-redis/target/*
+/my-redis/Cargo.lock
