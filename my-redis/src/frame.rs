@@ -2,7 +2,7 @@
 use bytes::{Buf, Bytes};
 use std::convert::TryInto;
 use std::fmt;
-use std::io::Cursor;
+use std::io::{Cursor};
 use std::num::TryFromIntError;
 use std::string::FromUtf8Error;
 
@@ -89,13 +89,99 @@ impl Frame{
 
                 Ok(())
             }
-            actual => Err(format!("protocol error; invalid frame type byte `{}`", actual).into()),
+            actual => Err(format!("protocol error; invalid frame type byte {}", actual).into()),
         }
     }
 
-    
+    pub fn parse(src: &mut Cursor<&[u8]>)->Result<Frame, Error>{
+        //get the first byte and parse the line
+        match get_u8(src)?{
+            b'+' => {
+                let line = get_line(src)?.to_vec();
+                
+                let string = String::from_utf8(line)?;
+
+                Ok(Frame::Simple(string))
+            }
+            b'-' =>{
+                let line = get_line(src)?.to_vec();
+
+                let string  = String::from_utf8(line)?;
+
+                Ok(Frame::Error(string))
+            }
+            b':' =>{
+                let len = get_decimal(src)?;
+                Ok(Frame::Integer(len))
+            }
+            b'$' =>{
+                if b'-' == peek_u8(src)?{
+                    let line = get_line(src)?;
+
+                    if line != b"-1"{
+                        return Err("protocal error; invalid frame fomat".into());
+                    }
+                    Ok(Frame::Null)
+                }else{
+                    let len = get_decimal(src)?.try_into()?;
+                    let n = len + 2;
+                    if src.remaining() < n{
+                        return Err(Error::Incomplete);
+                    }
+
+                    let data = Bytes::copy_from_slice(&src.bytes()[..len]);
+
+                    skip(src, n)?;
+                    Ok(Frame::Bulk(data))
+                }
+            }
+            b'*' =>{
+                let len = get_decimal(src)?.try_into()?;
+                
+                let mut out = Vec::with_capacity(len);
+                // parse 
+                for _ in 0..len{
+                    out.push(Frame::parse(src)?);
+                }
+
+                Ok(Frame::Array(out))
+            }
+            _ => unimplemented!(),
+        }
+    }
+    pub(crate) fn to_error(&self)->crate::Error{
+        format!("unexpected frame: {}", self).into()
+    }
 
 }
+
+impl fmt::Display for Frame{
+    fn fmt(&self, fmt: & mut fmt::Formatter)->fmt::Result{
+        use std::str;
+        // formatter 係 format的形式， "asdad {}" 而我地要將 self中不同的類型拆出黎交比 佢地中的fmt function去做
+        match self{
+            Frame::Simple(response) => response.fmt(fmt),
+            Frame::Error(msg) => write!(fmt, "error: {}", msg),
+            Frame::Integer(num) => num.fmt(fmt),
+            Frame::Bulk(msg)=> match str::from_utf8(msg){
+                Ok(string) => string.fmt(fmt),
+                Err(_) => write!(fmt, "{:?}", msg)
+            },
+            Frame::Null => "(nil)".fmt(fmt),
+            Frame::Array(parts) =>{
+                for (i, part) in parts.iter().enumerate(){
+                    if i > 0 {
+                        write!(fmt, " ")?;
+                        part.fmt(fmt)?;
+                    }
+                }
+                Ok(())
+            }
+
+        }
+    }
+}
+
 
 impl PartialEq<&str> for Frame{
     /// if you were to compare a Frame object directly with an &str, 
@@ -109,6 +195,7 @@ impl PartialEq<&str> for Frame{
         }
     }
 }
+
 
 fn get_u8(src: &mut Cursor<&[u8]>)->Result<u8, Error>{
     if !src.has_remaining() { 
@@ -160,4 +247,39 @@ fn get_line<'a>(src: &mut Cursor<&'a [u8]>)->Result<&'a [u8], Error>{
         }
     }
     Err(Error::Incomplete)
+}
+
+impl From<String> for Error{
+    fn from(src: String) -> Error{
+        Error::Other(src.into())
+    }
+}
+
+impl From<&str> for Error{
+    fn from(src: &str)->Error{
+        src.to_string().into()
+    }
+}
+
+impl From<FromUtf8Error> for Error{
+    fn from(_src : FromUtf8Error)->Error{
+        "protocol error; invalid frame format".into()
+    }
+}
+
+impl From<TryFromIntError> for Error{
+    fn from(_src: TryFromIntError)->Error{
+        "protocol error; invalid frame format".into()
+    }
+}
+
+impl std::error::Error for Error {}
+
+impl fmt::Display for Error{
+    fn fmt(&self, fmt: &mut fmt::Formatter)->fmt::Result{
+        match self{
+            Error::Incomplete => "stream ended early".fmt(fmt),
+            Error::Other(err) => err.fmt(fmt),
+        }
+    }
 }

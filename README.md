@@ -97,3 +97,10 @@ hello world would be encoded like this
 ```
 *2\r\n$5\r\nhello\r\n$5\r\nworld\r\n=
 ```
+
+
+
+
+my-redis doesnt support recursive frame structure,
+for example nested array structure, as we use tokio async write, and 
+async fn does not support recursion. 

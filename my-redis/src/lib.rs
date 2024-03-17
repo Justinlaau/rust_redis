@@ -28,6 +28,8 @@
 
 pub mod frame;
 pub use frame::Frame;
+pub mod connection;
+pub use connection::Connection;
 
 
 /// Default port that a redis server listens on.
