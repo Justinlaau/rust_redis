@@ -104,3 +104,15 @@ hello world would be encoded like this
 my-redis doesnt support recursive frame structure,
 for example nested array structure, as we use tokio async write, and 
 async fn does not support recursion. 
+
+what did i learn from this project?
+
+- you gotta use buffer, otherwise there would be tons of unnecessary cost of system call.
+
+- redis protocol 
+
+- how to design a frame
+
+- async 
+
+- how to properly shut down connection

@@ -24,14 +24,30 @@
 //! * `frame`: represents a single Redis protocol frame. A frame is used as an
 //!   intermediate representation between a "command" and the byte
 //!   representation.
+//! 
+pub mod clients;
+pub use clients::{BlockingClient, BufferedClient, Client};
 
+pub mod cmd;
+pub use cmd::Command;
+
+mod connection;
+pub use connection::Connection;
 
 pub mod frame;
 pub use frame::Frame;
-pub mod connection;
-pub use connection::Connection;
 
+mod db;
+use db::Db;
+use db::DbDropGuard;
 
+mod parse;
+use parse::{Parse, ParseError};
+
+pub mod server;
+
+mod shutdown;
+use shutdown::Shutdown;
 /// Default port that a redis server listens on.
 ///
 /// Used if no port is specified.
