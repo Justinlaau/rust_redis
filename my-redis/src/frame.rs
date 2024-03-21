@@ -1,8 +1,7 @@
-
 use bytes::{Buf, Bytes};
 use std::convert::TryInto;
 use std::fmt;
-use std::io::{Cursor};
+use std::io::Cursor;
 use std::num::TryFromIntError;
 use std::string::FromUtf8Error;
 
@@ -129,7 +128,7 @@ impl Frame{
                         return Err(Error::Incomplete);
                     }
 
-                    let data = Bytes::copy_from_slice(&src.bytes()[..len]);
+                    let data = Bytes::copy_from_slice(&src.chunk()[..len]);
 
                     skip(src, n)?;
                     Ok(Frame::Bulk(data))
@@ -209,7 +208,7 @@ fn peek_u8(src: &mut Cursor<&[u8]>)->Result<u8, Error>{
     if !src.has_remaining(){
         return Err(Error::Incomplete);
     }
-    Ok(src.bytes()[0])
+    Ok(src.chunk()[0])
 }
 
 // advance the cursor with n bytes

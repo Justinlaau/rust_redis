@@ -33,7 +33,7 @@ pub(crate) struct Db{
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct Shared{
     /// The shared state is guarded by a mutex. This is a `std::sync::Mutex` and
     /// not a Tokio mutex. This is because there are no asynchronous operations
@@ -114,7 +114,7 @@ impl Db{
             background_task : Notify::new()
         });
 
-        tokio::spawn(purge_expried_tasks(shared.clone()));
+        tokio::spawn(purge_expired_tasks(shared.clone()));
         Db{shared}
     }
 
@@ -171,7 +171,7 @@ impl Db{
         }
     }
 
-    pub(crate) fn subsribe(&self, key: String) -> broadcast::Receiver<Bytes>{
+    pub(crate) fn subscribe(&self, key: String) -> broadcast::Receiver<Bytes>{
         use std::collections::hash_map::Entry;
 
         let mut state = self.shared.state.lock().unwrap();
