@@ -1,17 +1,32 @@
-use mini_redis::{client, Result};
+//! Hello world server.
+//!
+//! A simple client that connects to a mini-redis server, sets key "hello" with value "world",
+//! and gets it from the server after
+//!
+//! You can test this out by running:
+//!
+//!     cargo run --bin mini-redis-server
+//!
+//! And then in another terminal run:
+//!
+//!     cargo run --example hello_world
+
+#![warn(rust_2018_idioms)]
+
+use my_redis::{clients::Client, Result};
 
 #[tokio::main]
-async fn main() -> Result<()> {
-    // 建立与mini-redis服务器的连接
-    let mut client = client::connect("127.0.0.1:6379").await?;
+pub async fn main() -> Result<()> {
+    // Open a connection to the mini-redis address.
+    let mut client = Client::connect("127.0.0.1:6379").await?;
 
-    // 设置 key: "hello" 和 值: "world"
+    // Set the key "hello" with value "world"
     client.set("hello", "world".into()).await?;
 
-    // 获取"key=hello"的值
+    // Get key "hello"
     let result = client.get("hello").await?;
 
-    println!("从服务器端获取到结果={:?}", result);
+    println!("got value from the server; success={:?}", result.is_some());
 
     Ok(())
 }

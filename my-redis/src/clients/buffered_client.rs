@@ -7,7 +7,7 @@ use tokio::sync::oneshot;
 
 // Enum used to message pass the requested command from the `BufferedClient` handle
 #[derive(Debug)]
-pub enum Command {
+enum Command {
     Get(String),
     Set(String, Bytes),
 }

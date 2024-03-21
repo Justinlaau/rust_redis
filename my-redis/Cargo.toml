@@ -6,11 +6,11 @@ edition = "2021"
 
 
 [[bin]]
-name = "mini-redis-cli"
+name = "my-redis-cli"
 path = "src/bin/cli.rs"
 
 [[bin]]
-name = "mini-redis-server"
+name = "my-redis-server"
 path = "src/bin/server.rs"
 
 [dependencies]
@@ -30,6 +30,7 @@ tracing-opentelemetry = { version = "0.21.0", optional = true }
 opentelemetry-aws = { version = "0.8.0", optional = true }
 # Allows you to send data to the OTel collector
 opentelemetry-otlp = { version = "0.13.0", optional = true }
+env_logger = "0.11.3"
 
 [dev-dependencies]
 # Enable test-utilities in dev mode only. This is mostly for tests.
